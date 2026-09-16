@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notação Big-O em Sistemas Operacionais</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js para gráficos interativos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome para ícones -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts - Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                        mono: ['Fira Code', 'monospace'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f0f7ff',
+                            100: '#e0effe',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom Styles & Scrollbars */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+        }
+        .dark ::-webkit-scrollbar-track {
+            background: rgba(255, 255, 255, 0.05);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(100, 116, 139, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(100, 116, 139, 0.7);
+        }
+
+        /* Syntax Highlighting Base */
+        pre code {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.875rem;
+            line-height: 1.5;
+        }
+
+        /* Glassmorphism effects */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .dark .glass-card {
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+
+        .tab-btn.active {
+            color: #2563eb;
+            border-bottom: 2px solid #2563eb;
+            font-weight: 600;
+        }
+        .dark .tab-btn.active {
+            color: #60a5fa;
+            border-bottom: 2px solid #60a5fa;
+        }
+
+        .complexity-badge-o1 { background-color: #10b981; color: white; }
+        .complexity-badge-ologn { background-color: #06b6d4; color: white; }
+        .complexity-badge-on { background-color: #f59e0b; color: white; }
+        .complexity-badge-onlogn { background-color: #8b5cf6; color: white; }
+        .complexity-badge-on2 { background-color: #ef4444; color: white; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col transition-colors duration-200">
+
+    <!-- Header Navbar -->
+    <header class="sticky top-0 z-40 w-full border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-3">
+                <div class="p-2 bg-blue-600 text-white rounded-lg shadow-md shadow-blue-500/20">
+                    <i class="fa-solid font-mono text-xl font-bold">O(n)</i>
+                </div>
+                <div>
+                    <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white">Big-O em Sistemas Operacionais</h1>
+                    <p class="text-xs text-slate-500 dark:text-slate-400">Gerenciamento de Memória & Processos</p>
+                </div>
+            </div>
+
+            <!-- Controles do Header -->
+            <div class="flex items-center space-x-3">
+                <button id="exportModalBtn" class="flex items-center space-x-2 px-3 py-1.5 text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-200 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-lg transition">
+                    <i class="fa-brands fa-github text-base"></i>
+                    <span class="hidden sm:inline">Exportar p/ GitHub</span>
+                </button>
+                <button id="themeToggleBtn" class="p-2 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg transition">
+                    <i id="themeIcon" class="fa-solid fa-moon text-lg"></i>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Navigation Tabs -->
+        <nav class="flex space-x-1 sm:space-x-2 border-b border-slate-200 dark:border-slate-800 overflow-x-auto pb-px mb-6 text-sm font-medium whitespace-nowrap scrollbar-none" id="tabsNav">
+            <button class="tab-btn px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 active" data-tab="intro">
+                <i class="fa-solid fa-compass mr-1.5"></i>Introdução
+            </button>
+            <button class="tab-btn px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400" data-tab="o1">
+                <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 mr-1.5"></span>O(1) Constante
+            </button>
+            <button class="tab-btn px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400" data-tab="ologn">
+                <span class="inline-block w-2 h-2 rounded-full bg-cyan-500 mr-1.5"></span>O(log n) Logarítmico
+            </button>
+            <button class="tab-btn px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400" data-tab="on">
+                <span class="inline-block w-2 h-2 rounded-full bg-amber-500 mr-1.5"></span>O(n) Linear
+            </button>
+            <button class="tab-btn px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400" data-tab="onlogn">
+                <span class="inline-block w-2 h-2 rounded-full bg-purple-500 mr-1.5"></span>O(n log n) Log-Linear
+            </button>
+            <button class="tab-btn px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400" data-tab="on2">
+                <span class="inline-block w-2 h-2 rounded-full bg-red-500 mr-1.5"></span>O(n²) Quadrático
+            </button>
+            <button class="tab-btn px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400" data-tab="chart">
+                <i class="fa-solid fa-chart-line mr-1.5"></i>Gráfico Interativo
+            </button>
+            <button class="tab-btn px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400" data-tab="opt">
+                <i class="fa-solid fa-bolt mr-1.5"></i>Otimizações
+            </button>
+            <button class="tab-btn px-4 py-2.5 text-slate-600 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400" data-tab="ref">
+                <i class="fa-solid fa-book mr-1.5"></i>Referências
+            </button>
+        </nav>
+
+        <!-- Tab Content Containers -->
+        <div id="tabContents">
+            
+            <!-- ABA 1: INTRODUÇÃO -->
+            <div id="tab-intro" class="tab-content block space-y-6">
+                <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white rounded-2xl p-6 sm:p-8 shadow-xl">
+                    <h2 class="text-2xl sm:text-3xl font-extrabold mb-3">Notação Big-O no Núcleo do Sistema Operacional</h2>
+                    <p class="text-blue-100 text-base sm:text-lg max-w-3xl leading-relaxed">
+                        Em um Sistema Operacional, a eficiência de algoritmos de gerenciamento de memória e escalonamento de processos determina a fluidez e estabilidade de todo o sistema. A notação Big-O expressa o limite superior de tempo ou espaço que um algoritmo necessita à medida que a carga de trabalho ($n$) cresce.
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                        <div class="w-10 h-10 bg-emerald-100 dark:bg-emerald-900/40 text-emerald-600 dark:text-emerald-400 rounded-lg flex items-center justify-center font-bold text-lg mb-4">
+                            O(1)
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Previsibilidade Real-Time</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">
+                            Garante resposta em tempo constante, indispensável para interrupções de hardware e schedulers de tempo real.
+                        </p>
+                    </div>
+
+                    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                        <div class="w-10 h-10 bg-cyan-100 dark:bg-cyan-900/40 text-cyan-600 dark:text-cyan-400 rounded-lg flex items-center justify-center font-bold text-lg mb-4">
+                            O(log n)
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Escala de Grande Porte</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">
+                            Permite gerenciar milhares de threads e blocos de memória com degradação mínima de desempenho (ex: CFS Scheduler).
+                        </p>
+                    </div>
+
+                    <div class="p-5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                        <div class="w-10 h-10 bg-red-100 dark:bg-red-900/40 text-red-600 dark:text-red-400 rounded-lg flex items-center justify-center font-bold text-lg mb-4">
+                            O(n²)
+                        </div>
+                        <h3 class="font-semibold text-base mb-1">Gargalo do Kernel</h3>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm">
+                            Complexidades quadráticas causam travamentos em larga escala e devem ser evitadas ou substituídas em SOs modernos.
+                        </p>
+                    </div>
+                </div>
+
+                <div class="bg-white dark:bg-slate-900 p-6 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <h3 class="text-lg font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-blue-500"></i>
+                        Resumo Geral das Complexidades em SOs
+                    </h3>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left text-sm">
+                            <thead class="bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-semibold">
+                                <tr>
+                                    <th class="p-3 rounded-l-lg">Complexidade</th>
+                                    <th class="p-3">Nome</th>
+                                    <th class="p-3">Aplicação em SO</th>
+                                    <th class="p-3 rounded-r-lg">Avaliação em Kernel</th>
+                                </tr>
+                            </thead>
+                            <tbody class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <tr>
+                                    <td class="p-3 font-mono font-bold text-emerald-600 dark:text-emerald-400">O(1)</td>
+                                    <td class="p-3">Constante</td>
+                                    <td class="p-3">O(1) Linux Scheduler, Freelist Allocation, Bitmap Lookups</td>
+                                    <td class="p-3"><span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded text-xs font-semibold">Excelente</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-mono font-bold text-cyan-600 dark:text-cyan-400">O(log n)</td>
+                                    <td class="p-3">Logarítmico</td>
+                                    <td class="p-3">Completely Fair Scheduler (Red-Black Tree), Buddy Allocator</td>
+                                    <td class="p-3"><span class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 rounded text-xs font-semibold">Muito Bom</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-mono font-bold text-amber-600 dark:text-amber-400">O(n)</td>
+                                    <td class="p-3">Linear</td>
+                                    <td class="p-3">Page Replacement Clock / FIFO, First-Fit/Best-Fit em lista ligada</td>
+                                    <td class="p-3"><span class="px-2 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded text-xs font-semibold">Aceitável / Problemático</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-mono font-bold text-purple-600 dark:text-purple-400">O(n log n)</td>
+                                    <td class="p-3">Log-linear</td>
+                                    <td class="p-3">Ordenação de tabelas de processos, QuickSort/MergeSort em depurações</td>
+                                    <td class="p-3"><span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded text-xs font-semibold">Moderado</span></td>
+                                </tr>
+                                <tr>
+                                    <td class="p-3 font-mono font-bold text-red-600 dark:text-red-400">O(n²)</td>
+                                    <td class="p-3">Quadrático</td>
+                                    <td class="p-3">Algoritmo do Banqueiro (Detecção de Deadlock), Schedulers antigos</td>
+                                    <td class="p-3"><span class="px-2 py-1 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded text-xs font-semibold">Inviável em Larga Escala</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 2: O(1) CONSTANTE -->
+            <div id="tab-o1" class="tab-content hidden space-y-6">
+                <!-- Banner Tópico -->
+                <div class="flex flex-wrap items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <div>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold complexity-badge-o1 mb-2">COMPLEXIDADE IDEAL</span>
+                        <h2 class="text-2xl font-bold">O(1) — Complexidade Constante</h2>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">O tempo de execução permanece rigorosamente o mesmo, independentemente da quantidade de processos ou blocos de memória no sistema.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-3xl font-mono font-extrabold text-emerald-500">T(n) = c</span>
+                    </div>
+                </div>
+
+                <!-- Detalhes & Algoritmo -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-microchip text-emerald-500"></i> Aplicação Real em Sistemas Operacionais
+                            </h3>
+                            <ul class="list-disc list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                                <li><strong class="text-slate-800 dark:text-slate-200">O(1) Linux Scheduler (Kernel 2.6):</strong> Utilizava duas matrizes de prioridade (`active` e `expired`) com bitmaps, obtendo o próximo processo via instrução assembly de bitscan (`sched_find_first_bit`).</li>
+                                <li><strong class="text-slate-800 dark:text-slate-200">Alocação por Free List (Pilha/Fila):</strong> Inserir e remover um bloco de memória do topo de uma lista encadeada de blocos livres é uma operação puramente de ponteiros.</li>
+                                <li><strong class="text-slate-800 dark:text-slate-200">Acesso a Tabelas de Páginas de Nível Único:</strong> Indexação direta em array através do número da página virtual (VPN).</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center text-emerald-600 dark:text-emerald-400 gap-2">
+                                <i class="fa-solid fa-lightbulb"></i> Por que o O(1) Scheduler foi substituído no Linux?
+                            </h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Apesar da velocidade constante $O(1)$, o scheduler do Linux 2.6 usava heurísticas complexas para calcular a "interatividade" do processo. Isso gerava *starvation* (esfaimação) para certas tarefas de fundo. Por isso, foi substituído pelo CFS ($O(\log n)$), priorizando a **justiça** sobre a velocidade absoluta de constantes.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Código C -->
+                    <div class="bg-slate-900 text-slate-100 rounded-xl p-5 font-mono text-sm shadow-md overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                                <span class="text-xs text-emerald-400 font-bold uppercase tracking-wider">C Code — Kernel Memory Free List</span>
+                                <span class="text-xs text-slate-500">O(1) Allocation</span>
+                            </div>
+<pre class="overflow-x-auto text-xs sm:text-sm"><code><span class="text-purple-400">typedef struct</span> Block {
+    <span class="text-blue-400">size_t</span> size;
+    <span class="text-purple-400">struct</span> Block* next;
+} Block;
+
+Block* free_list_head = NULL;
+
+<span class="text-slate-500">// Desalocação O(1): Insere no topo da lista</span>
+<span class="text-blue-400">void</span> <span class="text-yellow-300">kfree_fast</span>(Block* block) {
+    block->next = free_list_head;
+    free_list_head = block; 
+}
+
+<span class="text-slate-500">// Alocação O(1): Remove do topo da lista</span>
+Block* <span class="text-yellow-300">kmalloc_fast</span>() {
+    <span class="text-purple-400">if</span> (!free_list_head) <span class="text-purple-400">return</span> NULL;
+    Block* allocated = free_list_head;
+    free_list_head = free_list_head->next;
+    <span class="text-purple-400">return</span> allocated;
+}</code></pre>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                            <span>Instruções executadas: <strong>~3 instruções</strong></span>
+                            <span>Tempo de resposta: <strong>Constante</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 3: O(log n) LOGARÍTMICO -->
+            <div id="tab-ologn" class="tab-content hidden space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <div>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold complexity-badge-ologn mb-2">ALTAMENTE ESCALÁVEL</span>
+                        <h2 class="text-2xl font-bold">O(log n) — Complexidade Logarítmica</h2>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">A cada passo do algoritmo, o espaço de busca é reduzido pela metade. Excelente para gerenciar milhares de recursos simultâneos.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-3xl font-mono font-extrabold text-cyan-500">T(n) = \log_2(n)</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-tree text-cyan-500"></i> Uso no Kernel Linux e SOs Modernos
+                            </h3>
+                            <ul class="list-disc list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                                <li><strong class="text-slate-800 dark:text-slate-200">CFS (Completely Fair Scheduler):</strong> Utiliza uma Árvore Red-Black (`struct rb_root`) ordenada pelo tempo de execução virtual (`vruntime`). A escolha da próxima tarefa a executar leva tempo $O(1)$ (nó mais à esquerda), mas a inserção/remoção da árvore custa $O(\log n)$.</li>
+                                <li><strong class="text-slate-800 dark:text-slate-200">Buddy Allocator (Gerenciamento de Memória Física):</strong> Divide a memória em blocos de potências de 2 ($2^k$). A busca por blocos "irmãos" (buddies) e fusão/divisão exige $O(\log n)$ onde $n$ é o número de ordens de memória.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center text-cyan-600 dark:text-cyan-400 gap-2">
+                                <i class="fa-solid fa-circle-info"></i> Impacto na Prática
+                            </h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Mesmo se o sistema operacional tiver **1.000.000 de tarefas** rodando, o CFS realiza no máximo cerca de **20 comparações** na árvore Red-Black para inserir ou reordenar uma tarefa!
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Código C -->
+                    <div class="bg-slate-900 text-slate-100 rounded-xl p-5 font-mono text-sm shadow-md overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                                <span class="text-xs text-cyan-400 font-bold uppercase tracking-wider">C Code — Red-Black Tree Insertion (CFS)</span>
+                                <span class="text-xs text-slate-500">O(log n) Insertion</span>
+                            </div>
+<pre class="overflow-x-auto text-xs sm:text-sm"><code><span class="text-purple-400">void</span> <span class="text-yellow-300">enqueue_task_cfs</span>(struct rq *rq, struct task_struct *p) {
+    struct rb_node **link = &rq->cfs.tasks_timeline.rb_node;
+    struct rb_node *parent = NULL;
+    u64 vruntime = p->se.vruntime;
+
+    <span class="text-slate-500">// Busca logarítmica O(log n) na árvore</span>
+    <span class="text-purple-400">while</span> (*link) {
+        parent = *link;
+        struct sched_entity *entry = rb_entry(parent, ...);
+        <span class="text-purple-400">if</span> (vruntime < entry->vruntime)
+            link = &parent->rb_left;
+        <span class="text-purple-400">else</span>
+            link = &parent->rb_right;
+    }
+    <span class="text-slate-500">// Inserção e Rebalanceamento O(log n)</span>
+    rb_link_node(&p->se.run_node, parent, link);
+    rb_insert_color(&p->se.run_node, &rq->cfs.tasks_timeline);
+}</code></pre>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                            <span>Para n = 1.000.000: <strong>~20 operações</strong></span>
+                            <span>Estabilidade: <strong>Extrema</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 4: O(n) LINEAR -->
+            <div id="tab-on" class="tab-content hidden space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <div>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold complexity-badge-on mb-2">CUIDADO EM LARGA ESCALA</span>
+                        <h2 class="text-2xl font-bold">O(n) — Complexidade Linear</h2>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">O tempo cresce de forma diretamente proporcional ao número de elementos. Pode causar gargalos se $n$ for elevado.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-3xl font-mono font-extrabold text-amber-500">T(n) = c \cdot n</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-list-check text-amber-500"></i> Ocorrências em Gerenciamento de Memória / SO
+                            </h3>
+                            <ul class="list-disc list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                                <li><strong class="text-slate-800 dark:text-slate-200">Algoritmos de Alocação de Memória (Best-Fit / First-Fit em Lista Ligada):</strong> Percorrem toda a lista de blocos livres para encontrar o bloco mais adequado.</li>
+                                <li><strong class="text-slate-800 dark:text-slate-200">Garbage Collection (Mark-and-Sweep):</strong> A fase de varredura (*sweep*) examina todos os objetos alocados na heap em tempo $O(n)$.</li>
+                                <li><strong class="text-slate-800 dark:text-slate-200">Substituição de Páginas (Clock Algorithm / FIFO):</strong> No pior caso, varre todos os quadros de memória física para encontrar uma página para substituição.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center text-amber-600 dark:text-amber-400 gap-2">
+                                <i class="fa-solid fa-arrow-up-right-dots"></i> Estratégia de Melhoria
+                            </h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Para otimizar um Best-Fit de $O(n)$, os SOs modernos convertem a lista ligada simples em uma **Árvore AVL / Red-Black** ou usam um **Segregated Free List** (listas separadas por tamanho fixo), reduzindo o custo de alocação para $O(\log n)$ ou até $O(1)$.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Código C -->
+                    <div class="bg-slate-900 text-slate-100 rounded-xl p-5 font-mono text-sm shadow-md overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                                <span class="text-xs text-amber-400 font-bold uppercase tracking-wider">C Code — Memory Allocation Best-Fit</span>
+                                <span class="text-xs text-slate-500">O(n) Linear Scan</span>
+                            </div>
+<pre class="overflow-x-auto text-xs sm:text-sm"><code><span class="text-slate-500">// Procura o menor bloco suficiente percorrendo a lista toda</span>
+Block* <span class="text-yellow-300">best_fit_alloc</span>(<span class="text-blue-400">size_t</span> requested_size) {
+    Block* curr = free_list_head;
+    Block* best = NULL;
+
+    <span class="text-purple-400">while</span> (curr != NULL) { <span class="text-slate-500">// O(n) chamadas</span>
+        <span class="text-purple-400">if</span> (curr->free && curr->size >= requested_size) {
+            <span class="text-purple-400">if</span> (best == NULL || curr->size < best->size) {
+                best = curr;
+            }
+        }
+        curr = curr->next;
+    }
+    <span class="text-purple-400">return</span> best; <span class="text-slate-500">// Retorna o melhor bloco encontrado</span>
+}</code></pre>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                            <span>Para 10.000 blocos: <strong>10.000it</strong></span>
+                            <span>Risco: <strong>Aumento de latência</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 5: O(n log n) LOG-LINEAR -->
+            <div id="tab-onlogn" class="tab-content hidden space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <div>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold complexity-badge-onlogn mb-2">ORDENAÇÃO EFICIENTE</span>
+                        <h2 class="text-2xl font-bold">O(n log n) — Complexidade Log-Linear</h2>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">Complexidade típica dos melhores algoritmos de ordenação por comparação (QuickSort, MergeSort, HeapSort).</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-3xl font-mono font-extrabold text-purple-500">T(n) = n \cdot \log_2(n)</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-arrow-down-short-wide text-purple-500"></i> Uso em Kernels e Utilitários de SO
+                            </h3>
+                            <ul class="list-disc list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                                <li><strong class="text-slate-800 dark:text-slate-200">Reorganização Periódica de Tabelas de Processos/Páginas:</strong> Ordenar processos para relatórios de diagnóstico (`ps`, `top`) ou auditoria de recursos.</li>
+                                <li><strong class="text-slate-800 dark:text-slate-200">Sort do Kernel Linux (`lib/sort.c`):</strong> O Kernel implementa HeapSort $O(n \log n)$ com garantia de tempo no pior caso e sem depender de recursão profunda no stack do kernel.</li>
+                                <li><strong class="text-slate-800 dark:text-slate-200">Consolidação de Memória / Defragmentação Batch:</strong> Ordenar endereços de blocos livres para fusão em lote (*coalescing*).</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center text-purple-600 dark:text-purple-400 gap-2">
+                                <i class="fa-solid fa-triangle-exclamation"></i> Por que não usar QuickSort puro no Kernel?
+                            </h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                O QuickSort possui pior caso de $O(n^2)$ e consumo de pilha recursiva. Para evitar o estouro de pilha (*kernel stack overflow*), o Linux prefere **HeapSort** ou **Introsort**, mantendo a garantia estrita de $O(n \log n)$.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Código C -->
+                    <div class="bg-slate-900 text-slate-100 rounded-xl p-5 font-mono text-sm shadow-md overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                                <span class="text-xs text-purple-400 font-bold uppercase tracking-wider">C Code — Linux Kernel HeapSort</span>
+                                <span class="text-xs text-slate-500">O(n log n) Guaranteed</span>
+                            </div>
+<pre class="overflow-x-auto text-xs sm:text-sm"><code><span class="text-slate-500">// Implementação baseada no lib/sort.c do Kernel Linux</span>
+<span class="text-purple-400">void</span> <span class="text-yellow-300">sort</span>(<span class="text-blue-400">void</span> *base, <span class="text-blue-400">size_t</span> num, <span class="text-blue-400">size_t</span> size,
+          <span class="text-blue-400">int</span> (*cmp_func)(<span class="text-purple-400">const void</span> *, <span class="text-purple-400">const void</span> *)) {
+    <span class="text-slate-500">// 1. Constrói o Max Heap: O(n)</span>
+    <span class="text-purple-400">for</span> (<span class="text-blue-400">int</span> i = num / 2 - 1; i >= 0; i--)
+        sift_down(base, i, num, size, cmp_func);
+
+    <span class="text-slate-500">// 2. Extrai elementos um a um: O(n log n)</span>
+    <span class="text-purple-400">for</span> (<span class="text-blue-400">int</span> i = num - 1; i > 0; i--) {
+        swap(base, base + i * size, size);
+        sift_down(base, 0, i, size, cmp_func);
+    }
+}</code></pre>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                            <span>Garantia de Espaço: <strong>O(1) in-place</strong></span>
+                            <span>Pior Caso: <strong>O(n log n)</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 6: O(n²) QUADRÁTICO -->
+            <div id="tab-on2" class="tab-content hidden space-y-6">
+                <div class="flex flex-wrap items-center justify-between gap-4 p-6 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <div>
+                        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold complexity-badge-on2 mb-2">INVIÁVEL EM ESCALA</span>
+                        <h2 class="text-2xl font-bold">O(n²) — Complexidade Quadrática</h2>
+                        <p class="text-slate-600 dark:text-slate-400 text-sm mt-1">O tempo de execução dobra ao quadrado conforme a entrada cresce. Pode colapsar a performance do sistema operacional.</p>
+                    </div>
+                    <div class="text-right">
+                        <span class="text-3xl font-mono font-extrabold text-red-500">T(n) = c \cdot n^2</span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="space-y-4">
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center gap-2">
+                                <i class="fa-solid fa-triangle-exclamation text-red-500"></i> Onde surge em Teoria de SOs?
+                            </h3>
+                            <ul class="list-disc list-inside space-y-2 text-sm text-slate-600 dark:text-slate-400">
+                                <li><strong class="text-slate-800 dark:text-slate-200">Algoritmo do Banqueiro (Banker's Algorithm - Dijkstra):</strong> Usado para prevenção e detecção de Deadlocks. No pior caso, possui complexidade de tempo $O(m \cdot n^2)$, onde $n$ é o número de processos e $m$ o de recursos.</li>
+                                <li><strong class="text-slate-800 dark:text-slate-200">Escalonadores Primitivos / Legados:</strong> Matrizes de dependência sem índices ou escalonadores baseados em BubbleSort de filas de prioridades.</li>
+                            </ul>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 p-5 border border-slate-200 dark:border-slate-800 rounded-xl">
+                            <h3 class="font-bold text-base mb-2 flex items-center text-red-600 dark:text-red-400 gap-2">
+                                <i class="fa-solid fa-ban"></i> Por que o Algoritmo do Banqueiro NÃO é usado no Linux/Windows?
+                            </h3>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+                                Devido ao custo $O(m \cdot n^2)$ e à necessidade de saber os recursos máximos exigidos antecipadamente por cada processo, SOs de propósito geral usam a **Estratégia do Avestruz** (ignorar deadlocks e tratá-los no espaço do usuário se ocorrerem) em vez de validar cada requisição com $O(n^2)$.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Código C -->
+                    <div class="bg-slate-900 text-slate-100 rounded-xl p-5 font-mono text-sm shadow-md overflow-hidden flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between pb-3 mb-3 border-b border-slate-800">
+                                <span class="text-xs text-red-400 font-bold uppercase tracking-wider">C Code — Banker's Safety Algorithm</span>
+                                <span class="text-xs text-slate-500">O(n²) Complexity</span>
+                            </div>
+<pre class="overflow-x-auto text-xs sm:text-sm"><code><span class="text-slate-500">// Verificação de Segurança de Deadlock O(n²)</span>
+<span class="text-blue-400">bool</span> <span class="text-yellow-300">is_safe_state</span>(<span class="text-blue-400">int</span> P, <span class="text-blue-400">int</span> R, <span class="text-blue-400">int</span> alloc[P][R], <span class="text-blue-400">int</span> need[P][R], <span class="text-blue-400">int</span> avail[R]) {
+    <span class="text-blue-400">bool</span> finish[P]; memset(finish, 0, <span class="text-purple-400">sizeof</span>(finish));
+    <span class="text-blue-400">int</span> count = 0;
+
+    <span class="text-purple-400">while</span> (count < P) {
+        <span class="text-blue-400">bool</span> found = false;
+        <span class="text-purple-400">for</span> (<span class="text-blue-400">int</span> p = 0; p < P; p++) { <span class="text-slate-500">// Loop 1: n</span>
+            <span class="text-purple-400">if</span> (!finish[p]) {
+                <span class="text-blue-400">int</span> r;
+                <span class="text-purple-400">for</span> (r = 0; r < R; r++) <span class="text-slate-500">// Loop 2: m</span>
+                    <span class="text-purple-400">if</span> (need[p][r] > avail[r]) <span class="text-purple-400">break</span>;
+                <span class="text-purple-400">if</span> (r == R) { <span class="text-slate-500">// Encontrou processo seguro</span>
+                    <span class="text-purple-400">for</span> (<span class="text-blue-400">int</span> k = 0; k < R; k++) avail[k] += alloc[p][k];
+                    finish[p] = true; found = true; count++;
+                }
+            }
+        }
+        <span class="text-purple-400">if</span> (!found) <span class="text-purple-400">return</span> false; <span class="text-slate-500">// Deadlock detectado</span>
+    }
+    <span class="text-purple-400">return</span> true;
+}</code></pre>
+                        </div>
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-400 flex items-center justify-between">
+                            <span>Para 10.000 processos: <strong>100.000.000 ops!</strong></span>
+                            <span>Resultado: <strong>System Freezing</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 7: GRÁFICO INTERATIVO -->
+            <div id="tab-chart" class="tab-content hidden space-y-6">
+                <div class="bg-white dark:bg-slate-900 p-6 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                        <div>
+                            <h2 class="text-xl font-bold">Simulador e Comparativo Visual de Complexidade</h2>
+                            <p class="text-slate-600 dark:text-slate-400 text-sm">Ajuste o valor da carga de trabalho ($n$) para comparar a quantidade de operações exigidas por cada classe de algoritmo.</p>
+                        </div>
+                        <!-- Controls -->
+                        <div class="flex items-center space-x-4 bg-slate-100 dark:bg-slate-800 p-3 rounded-lg">
+                            <label for="nRange" class="text-sm font-semibold whitespace-nowrap">Carga de Entrada (n = <span id="nValue" class="text-blue-600 dark:text-blue-400 font-mono font-bold">50</span>):</label>
+                            <input id="nRange" type="range" min="5" max="100" value="50" class="w-32 sm:w-48 accent-blue-600 cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Canvas para Chart.js -->
+                    <div class="relative h-80 sm:h-96 w-full">
+                        <canvas id="complexityChart"></canvas>
+                    </div>
+
+                    <!-- Métricas Computadas Dinamicamente -->
+                    <div class="grid grid-cols-2 sm:grid-cols-5 gap-3 mt-6">
+                        <div class="p-3 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/50 rounded-lg text-center">
+                            <span class="text-xs text-emerald-600 dark:text-emerald-400 font-semibold block">O(1)</span>
+                            <span id="calc-o1" class="text-lg font-mono font-bold text-emerald-700 dark:text-emerald-300">1</span>
+                            <span class="text-[10px] text-slate-500 block">operações</span>
+                        </div>
+                        <div class="p-3 bg-cyan-50 dark:bg-cyan-950/40 border border-cyan-200 dark:border-cyan-800/50 rounded-lg text-center">
+                            <span class="text-xs text-cyan-600 dark:text-cyan-400 font-semibold block">O(log n)</span>
+                            <span id="calc-ologn" class="text-lg font-mono font-bold text-cyan-700 dark:text-cyan-300">5.64</span>
+                            <span class="text-[10px] text-slate-500 block">operações</span>
+                        </div>
+                        <div class="p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/50 rounded-lg text-center">
+                            <span class="text-xs text-amber-600 dark:text-amber-400 font-semibold block">O(n)</span>
+                            <span id="calc-on" class="text-lg font-mono font-bold text-amber-700 dark:text-amber-300">50</span>
+                            <span class="text-[10px] text-slate-500 block">operações</span>
+                        </div>
+                        <div class="p-3 bg-purple-50 dark:bg-purple-950/40 border border-purple-200 dark:border-purple-800/50 rounded-lg text-center">
+                            <span class="text-xs text-purple-600 dark:text-purple-400 font-semibold block">O(n log n)</span>
+                            <span id="calc-onlogn" class="text-lg font-mono font-bold text-purple-700 dark:text-purple-300">282</span>
+                            <span class="text-[10px] text-slate-500 block">operações</span>
+                        </div>
+                        <div class="p-3 bg-red-50 dark:bg-red-950/40 border border-red-200 dark:border-red-800/50 rounded-lg text-center col-span-2 sm:col-span-1">
+                            <span class="text-xs text-red-600 dark:text-red-400 font-semibold block">O(n²)</span>
+                            <span id="calc-on2" class="text-lg font-mono font-bold text-red-700 dark:text-red-300">2,500</span>
+                            <span class="text-[10px] text-slate-500 block">operações</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 8: ESTRATÉGIAS DE OTIMIZAÇÃO -->
+            <div id="tab-opt" class="tab-content hidden space-y-6">
+                <div class="bg-white dark:bg-slate-900 p-6 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-bolt text-yellow-500"></i> Estratégias de Otimização no Kernel
+                    </h2>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm mb-6 leading-relaxed">
+                        Engenheiros de Sistemas Operacionais utilizam padronizações de estruturas de dados e técnicas avançadas para refatorar algoritmos de classes desfavoráveis ($O(n^2)$ ou $O(n)$) para ordens de grandeza muito superiores ($O(\log n)$ ou $O(1)$).
+                    </p>
+
+                    <div class="space-y-6">
+                        <!-- Transição 1 -->
+                        <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-5 bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <h3 class="font-bold text-base">1. Transição de $O(n)$ para $O(1)$: Bitmaps + Instruções de Hardware</h3>
+                                <div class="flex items-center space-x-2 font-mono text-xs font-bold">
+                                    <span class="px-2 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded">DE: O(n)</span>
+                                    <i class="fa-solid fa-arrow-right text-slate-400"></i>
+                                    <span class="px-2 py-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded">PARA: O(1)</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                **Problema:** Iterar em uma lista encadeada procurando por uma página de memória livre custa $O(n)$.<br>
+                                **Solução do SO:** Mapear os blocos de memória em um **Bitmap** e utilizar instruções da CPU como `__builtin_clz` (Count Leading Zeros) ou `bsf` (Bit Scan Forward). A CPU encontra o primeiro bit livre em **1 único ciclo de clock**, atingindo $O(1)$ real.
+                            </p>
+                        </div>
+
+                        <!-- Transição 2 -->
+                        <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-5 bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <h3 class="font-bold text-base">2. Transição de $O(n)$ para $O(\log n)$: Substituição de Lista por Árvores Red-Black</h3>
+                                <div class="flex items-center space-x-2 font-mono text-xs font-bold">
+                                    <span class="px-2 py-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded">DE: O(n)</span>
+                                    <i class="fa-solid fa-arrow-right text-slate-400"></i>
+                                    <span class="px-2 py-1 bg-cyan-100 dark:bg-cyan-900/50 text-cyan-700 dark:text-cyan-300 rounded">PARA: O(log n)</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                **Problema:** O escalonador O(n) antigo do Linux varria uma lista encadeada de tarefas para decidir quem rodava a seguir. Se o sistema tivesse 10.000 tarefas, o tempo do scheduler era um gargalo.<br>
+                                **Solução do SO:** Migração para o CFS com Árvores Red-Black. O acesso a menor tarefa (`rb_leftmost`) é mantido em ponteiro $O(1)$ e re-inserções duram $O(\log n)$.
+                            </p>
+                        </div>
+
+                        <!-- Transição 3 -->
+                        <div class="border border-slate-200 dark:border-slate-800 rounded-xl p-5 bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                                <h3 class="font-bold text-base">3. Transição de $O(n^2)$ para $O(n \log n)$ ou Evitação Total em Deadlock</h3>
+                                <div class="flex items-center space-x-2 font-mono text-xs font-bold">
+                                    <span class="px-2 py-1 bg-red-100 dark:bg-red-900/50 text-red-700 dark:text-red-300 rounded">DE: O(n²)</span>
+                                    <i class="fa-solid fa-arrow-right text-slate-400"></i>
+                                    <span class="px-2 py-1 bg-purple-100 dark:bg-purple-900/50 text-purple-700 dark:text-purple-300 rounded">PARA: O(n log n) / Ignorado</span>
+                                </div>
+                            </div>
+                            <p class="text-sm text-slate-600 dark:text-slate-400 mb-3">
+                                **Problema:** O Algoritmo do Banqueiro tem complexidade $O(m \cdot n^2)$ para garantir prevenção absoluta contra deadlocks.<br>
+                                **Solução do SO:** Sistemas modernos substituem a verificação contínua do Banqueiro por **Hierarquia de Travas (Lock Ordering)** com detecção baseada em Grafo de Alocação de Recursos (RAG) verificada apenas periodicamente ou em threads em background.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ABA 9: REFERÊNCIAS ACADÊMICAS -->
+            <div id="tab-ref" class="tab-content hidden space-y-6">
+                <div class="bg-white dark:bg-slate-900 p-6 border border-slate-200 dark:border-slate-800 rounded-xl shadow-sm">
+                    <h2 class="text-2xl font-bold mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-book-bookmark text-blue-600"></i> Referências Acadêmicas & Documentação Oficial
+                    </h2>
+                    <p class="text-slate-600 dark:text-slate-400 text-sm mb-6">
+                        Fontes bibliográficas e especificações técnicas de referência que comprovam as complexidades aplicadas aos núcleos de sistemas operacionais.
+                    </p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl flex items-start gap-4 bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-600 rounded-lg">
+                                <i class="fa-solid fa-book text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Operating System Concepts (10th Ed.)</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Silberschatz, A., Galvin, P. B., & Gagne, G. (Wiley, 2018)</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 mt-2">Referência clássica cobrindo o Algoritmo do Banqueiro, Best-Fit/Worst-Fit em gerenciamento de memória e substituição de páginas.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl flex items-start gap-4 bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="p-3 bg-blue-100 dark:bg-blue-900/40 text-blue-600 rounded-lg">
+                                <i class="fa-solid fa-book text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Sistemas Operacionais Modernos (4ª Ed.)</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Tanenbaum, A. S., & Bos, H. (Pearson, 2016)</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 mt-2">Detalhamento sobre Buddy Allocator, estruturas de tabela de páginas multinível e escalonamento de processos.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl flex items-start gap-4 bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="p-3 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg">
+                                <i class="fa-brands fa-linux text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Linux Kernel Documentation — CFS Scheduler</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Kernel.org official docs (`Documentation/scheduler/sched-design-CFS.rst`)</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 mt-2">Comprova a estrutura Red-Black Tree para garantir tempo $O(\log n)$ no escalonamento oficial do Linux.</p>
+                            </div>
+                        </div>
+
+                        <div class="p-4 border border-slate-200 dark:border-slate-800 rounded-xl flex items-start gap-4 bg-slate-50/50 dark:bg-slate-800/30">
+                            <div class="p-3 bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 rounded-lg">
+                                <i class="fa-brands fa-linux text-xl"></i>
+                            </div>
+                            <div>
+                                <h3 class="font-bold text-sm text-slate-900 dark:text-white">Linux Kernel Memory Management (mm)</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Kernel.org official docs (`mm/page_alloc.c`)</p>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 mt-2">Documentação da alocação do Buddy System e SLAB/SLUB allocators para tempo constante $O(1)$ de pequenos objetos.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <!-- Modal Exportar p/ GitHub -->
+    <div id="exportModal" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 opacity-0 pointer-events-none transition-opacity duration-200">
+        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl flex flex-col max-h-[90vh]">
+            <div class="p-5 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                <div class="flex items-center space-x-2">
+                    <i class="fa-brands fa-github text-2xl"></i>
+                    <h3 class="font-bold text-lg">Arquivos Separados para Exportar para o GitHub</h3>
+                </div>
+                <button id="closeModalBtn" class="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white text-xl">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+
+            <!-- Navegação nos blocos do modal -->
+            <div class="px-5 pt-4 flex space-x-2 border-b border-slate-200 dark:border-slate-800">
+                <button class="modal-tab-btn active px-3 py-1.5 text-xs font-semibold rounded-t-lg bg-slate-100 dark:bg-slate-800 border-b-2 border-blue-600 text-blue-600 dark:text-blue-400" data-modal-tab="modal-html">index.html</button>
+                <button class="modal-tab-btn px-3 py-1.5 text-xs font-semibold rounded-t-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" data-modal-tab="modal-css">style.css</button>
+                <button class="modal-tab-btn px-3 py-1.5 text-xs font-semibold rounded-t-lg text-slate-500 hover:text-slate-800 dark:hover:text-slate-200" data-modal-tab="modal-js">script.js</button>
+            </div>
+
+            <div class="p-5 overflow-y-auto flex-grow font-mono text-xs">
+                <!-- Tab index.html -->
+                <div id="modal-html" class="modal-tab-content block">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-slate-500">Estrutura principal HTML</span>
+                        <button onclick="copyToClipboard('code-html')" class="px-2.5 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white font-sans rounded shadow">
+                            <i class="fa-regular fa-copy mr-1"></i>Copiar HTML
+                        </button>
+                    </div>
+<pre class="bg-slate-950 text-slate-100 p-4 rounded-lg overflow-x-auto"><code id="code-html">&lt;!DOCTYPE html&gt;
+&lt;html lang="pt-BR"&gt;
+&lt;head&gt;
+    &lt;meta charset="UTF-8"&gt;
+    &lt;meta name="viewport" content="width=device-width, initial-scale=1.0"&gt;
+    &lt;title&gt;Big-O em Sistemas Operacionais&lt;/title&gt;
+    &lt;script src="https://cdn.tailwindcss.com"&gt;&lt;/script&gt;
+    &lt;script src="https://cdn.jsdelivr.net/npm/chart.js"&gt;&lt;/script&gt;
+    &lt;link rel="stylesheet" href="style.css"&gt;
+&lt;/head&gt;
+&lt;body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100"&gt;
+    &lt;!-- O conteúdo das abas e gráficos vai aqui --&gt;
+    &lt;script src="script.js"&gt;&lt;/script&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+                </div>
+
+                <!-- Tab style.css -->
+                <div id="modal-css" class="modal-tab-content hidden">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-slate-500">Estilos CSS limpos e organizados</span>
+                        <button onclick="copyToClipboard('code-css')" class="px-2.5 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white font-sans rounded shadow">
+                            <i class="fa-regular fa-copy mr-1"></i>Copiar CSS
+                        </button>
+                    </div>
+<pre class="bg-slate-950 text-slate-100 p-4 rounded-lg overflow-x-auto"><code id="code-css">/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.05);
+}
+.dark ::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(100, 116, 139, 0.4);
+    border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+    background: rgba(100, 116, 139, 0.7);
+}
+
+/* Glassmorphism */
+.glass-card {
+    background: rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(12px);
+}
+.dark .glass-card {
+    background: rgba(15, 23, 42, 0.8);
+    backdrop-filter: blur(12px);
+}
+
+/* Active tab styles */
+.tab-btn.active {
+    color: #2563eb;
+    border-bottom: 2px solid #2563eb;
+    font-weight: 600;
+}
+.dark .tab-btn.active {
+    color: #60a5fa;
+    border-bottom: 2px solid #60a5fa;
+}</code></pre>
+                </div>
+
+                <!-- Tab script.js -->
+                <div id="modal-js" class="modal-tab-content hidden">
+                    <div class="flex justify-between items-center mb-2">
+                        <span class="text-slate-500">Lógica JavaScript & Chart.js</span>
+                        <button onclick="copyToClipboard('code-js')" class="px-2.5 py-1 text-xs bg-blue-600 hover:bg-blue-700 text-white font-sans rounded shadow">
+                            <i class="fa-regular fa-copy mr-1"></i>Copiar JS
+                        </button>
+                    </div>
+<pre class="bg-slate-950 text-slate-100 p-4 rounded-lg overflow-x-auto"><code id="code-js">// Gerenciamento de Abas
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const targetTab = btn.getAttribute('data-tab');
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
+        
+        btn.classList.add('active');
+        document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
+    });
+});
+
+// Gráfico com Chart.js (Com cálculo correto de Math.log2)
+let chartInstance = null;
+function initChart() {
+    const ctx = document.getElementById('complexityChart').getContext('2d');
+    chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: Array.from({length: 50}, (_, i) => i + 1),
+            datasets: [
+                { label: 'O(1)', data: Array(50).fill(1), borderColor: '#10b981' },
+                { label: 'O(log n)', data: Array.from({length: 50}, (_, i) => Math.log2(i + 1)), borderColor: '#06b6d4' },
+                { label: 'O(n)', data: Array.from({length: 50}, (_, i) => i + 1), borderColor: '#f59e0b' },
+                { label: 'O(n log n)', data: Array.from({length: 50}, (_, i) => (i + 1) * Math.log2(i + 1)), borderColor: '#8b5cf6' },
+                { label: 'O(n²)', data: Array.from({length: 50}, (_, i) => Math.pow(i + 1, 2)), borderColor: '#ef4444' }
+            ]
+        }
+    });
+}
+window.onload = initChart;</code></pre>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Interatividade -->
+    <script>
+        // Copy Helper para o Modal
+        function copyToClipboard(elementId) {
+            const text = document.getElementById(elementId).innerText;
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            document.execCommand('copy');
+            document.body.removeChild(textarea);
+
+            // Toast de confirmação
+            const toast = document.createElement('div');
+            toast.className = 'fixed bottom-5 right-5 bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm shadow-xl z-50 flex items-center space-x-2 animate-bounce';
+            toast.innerHTML = '<i class="fa-solid fa-check"></i><span>Copiado com sucesso!</span>';
+            document.body.appendChild(toast);
+            setTimeout(() => toast.remove(), 2500);
+        }
+
+        // Alternância de Tema Claro / Escuro
+        const themeToggleBtn = document.getElementById('themeToggleBtn');
+        const themeIcon = document.getElementById('themeIcon');
+
+        themeToggleBtn.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            if (document.documentElement.classList.contains('dark')) {
+                themeIcon.className = 'fa-solid fa-sun text-lg text-yellow-400';
+            } else {
+                themeIcon.className = 'fa-solid fa-moon text-lg';
+            }
+            if (chartInstance) updateChartColors();
+        });
+
+        // Alternância de Abas Principal
+        const tabBtns = document.querySelectorAll('#tabsNav .tab-btn');
+        const tabContents = document.querySelectorAll('#tabContents .tab-content');
+
+        tabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetTab = btn.getAttribute('data-tab');
+
+                tabBtns.forEach(b => b.classList.remove('active'));
+                tabContents.forEach(c => c.classList.add('hidden'));
+
+                btn.classList.add('active');
+                document.getElementById(`tab-${targetTab}`).classList.remove('hidden');
+
+                // Atualizar gráfico se a aba for aberta
+                if (targetTab === 'chart' && chartInstance) {
+                    chartInstance.resize();
+                }
+            });
+        });
+
+        // Alternância de Abas do Modal de Exportação
+        const modalTabBtns = document.querySelectorAll('.modal-tab-btn');
+        const modalTabContents = document.querySelectorAll('.modal-tab-content');
+
+        modalTabBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const targetModalTab = btn.getAttribute('data-modal-tab');
+
+                modalTabBtns.forEach(b => {
+                    b.classList.remove('active', 'border-b-2', 'border-blue-600', 'text-blue-600', 'dark:text-blue-400', 'bg-slate-100', 'dark:bg-slate-800');
+                    b.classList.add('text-slate-500');
+                });
+                modalTabContents.forEach(c => c.classList.add('hidden'));
+
+                btn.classList.add('active', 'border-b-2', 'border-blue-600', 'text-blue-600', 'dark:text-blue-400', 'bg-slate-100', 'dark:bg-slate-800');
+                btn.classList.remove('text-slate-500');
+                document.getElementById(targetModalTab).classList.remove('hidden');
+            });
+        });
+
+        // Modal de Exportação
+        const exportModalBtn = document.getElementById('exportModalBtn');
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const exportModal = document.getElementById('exportModal');
+
+        exportModalBtn.addEventListener('click', () => {
+            exportModal.classList.remove('opacity-0', 'pointer-events-none');
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            exportModal.classList.add('opacity-0', 'pointer-events-none');
+        });
+
+        exportModal.addEventListener('click', (e) => {
+            if (e.target === exportModal) {
+                exportModal.classList.add('opacity-0', 'pointer-events-none');
+            }
+        });
+
+        // CHART.JS CONFIGURAÇÃO E ATUALIZAÇÕES DINÂMICAS COM CORREÇÃO DE O(log n)
+        let chartInstance = null;
+        const nRange = document.getElementById('nRange');
+        const nValue = document.getElementById('nValue');
+
+        function generateChartData(nMax) {
+            const labels = [];
+            const dataO1 = [];
+            const dataOlogN = [];
+            const dataON = [];
+            const dataONlogN = [];
+            const dataON2 = [];
+
+            for (let i = 1; i <= nMax; i++) {
+                labels.push(i);
+                dataO1.push(1);
+                // Math.log2(i) computa exatamente log na base 2
+                dataOlogN.push(Math.log2(i));
+                dataON.push(i);
+                dataONlogN.push(i * Math.log2(i));
+                dataON2.push(Math.pow(i, 2));
+            }
+
+            return { labels, dataO1, dataOlogN, dataON, dataONlogN, dataON2 };
+        }
+
+        function updateCalculatedValues(n) {
+            document.getElementById('calc-o1').innerText = "1";
+            document.getElementById('calc-ologn').innerText = Math.log2(n).toFixed(2);
+            document.getElementById('calc-on').innerText = n;
+            document.getElementById('calc-onlogn').innerText = Math.round(n * Math.log2(n));
+            document.getElementById('calc-on2').innerText = (n * n).toLocaleString();
+        }
+
+        function updateChartColors() {
+            const isDark = document.documentElement.classList.contains('dark');
+            const textColor = isDark ? '#94a3b8' : '#64748b';
+            const gridColor = isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)';
+
+            chartInstance.options.scales.x.ticks.color = textColor;
+            chartInstance.options.scales.y.ticks.color = textColor;
+            chartInstance.options.scales.x.grid.color = gridColor;
+            chartInstance.options.scales.y.grid.color = gridColor;
+            chartInstance.options.plugins.legend.labels.color = textColor;
+            chartInstance.update();
+        }
+
+        function initChart() {
+            const ctx = document.getElementById('complexityChart').getContext('2d');
+            const nVal = parseInt(nRange.value, 10);
+            const { labels, dataO1, dataOlogN, dataON, dataONlogN, dataON2 } = generateChartData(nVal);
+
+            chartInstance = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'O(1) Constante',
+                            data: dataO1,
+                            borderColor: '#10b981',
+                            backgroundColor: '#10b981',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'O(log n) Logarítmico',
+                            data: dataOlogN,
+                            borderColor: '#06b6d4',
+                            backgroundColor: '#06b6d4',
+                            borderWidth: 2.5,
+                            pointRadius: 0,
+                            tension: 0.2
+                        },
+                        {
+                            label: 'O(n) Linear',
+                            data: dataON,
+                            borderColor: '#f59e0b',
+                            backgroundColor: '#f59e0b',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'O(n log n) Log-Linear',
+                            data: dataONlogN,
+                            borderColor: '#8b5cf6',
+                            backgroundColor: '#8b5cf6',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        },
+                        {
+                            label: 'O(n²) Quadrático',
+                            data: dataON2,
+                            borderColor: '#ef4444',
+                            backgroundColor: '#ef4444',
+                            borderWidth: 2,
+                            pointRadius: 0,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    scales: {
+                        x: {
+                            title: { display: true, text: 'Tamanho da Entrada (n)' }
+                        },
+                        y: {
+                            title: { display: true, text: 'Número de Operações' },
+                            beginAtZero: true
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            usePointStyle: true,
+                            callbacks: {
+                                label: function(context) {
+                                    let label = context.dataset.label || '';
+                                    if (label) {
+                                        label += ': ';
+                                    }
+                                    if (context.parsed.y !== null) {
+                                        label += context.parsed.y.toFixed(2);
+                                    }
+                                    return label;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            updateChartColors();
+            updateCalculatedValues(nVal);
+        }
+
+        nRange.addEventListener('input', (e) => {
+            const nVal = parseInt(e.target.value, 10);
+            nValue.innerText = nVal;
+
+            const { labels, dataO1, dataOlogN, dataON, dataONlogN, dataON2 } = generateChartData(nVal);
+
+            chartInstance.data.labels = labels;
+            chartInstance.data.datasets[0].data = dataO1;
+            chartInstance.data.datasets[1].data = dataOlogN;
+            chartInstance.data.datasets[2].data = dataON;
+            chartInstance.data.datasets[3].data = dataONlogN;
+            chartInstance.data.datasets[4].data = dataON2;
+
+            chartInstance.update('none'); // Update sem animação lenta p/ fluidez do slider
+            updateCalculatedValues(nVal);
+        });
+
+        window.onload = function() {
+            initChart();
+        };
+    </script>
+</body>
+</html>
